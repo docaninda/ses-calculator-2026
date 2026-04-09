@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SES Calculator 2026 — B. G. Prasad & Kuppuswamy Scales</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme colour (status bar on Android) -->
+  <meta name="theme-color" content="#1a3c5e" />
+
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SES 2026" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+
+  <!-- SEO / sharing -->
+  <meta name="description" content="Calculate socioeconomic status using updated B. G. Prasad and Modified Kuppuswamy scales for India 2026 (CPI-IW Jan 2026 = 148.6)." />
+  <meta property="og:title" content="SES Calculator India 2026" />
+  <meta property="og:description" content="B. G. Prasad & Kuppuswamy socioeconomic status scales updated for 2026." />
+  <meta property="og:image" content="/icon-512.png" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    /* iOS safe-area padding */
+    header {
+      background: linear-gradient(135deg, #1a3c5e 0%, #2563a8 100%);
+      color: white;
+      padding: 28px 24px 22px;
+      padding-top: calc(28px + env(safe-area-inset-top));
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 0.88rem;
+      opacity: 0.85;
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    header .citation {
+      margin-top: 10px;
+      font-size: 0.76rem;
+      opacity: 0.7;
+      font-style: italic;
+    }
+
+    /* Install banner */
+    #install-banner {
+      display: none;
+      background: #0f4c81;
+      color: white;
+      padding: 12px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #install-banner button {
+      background: white;
+      color: #0f4c81;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    #install-banner .dismiss {
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-weight: 400;
+      font-size: 0.78rem;
+      padding: 4px 8px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 720px) {
+      .container { grid-template-columns: 1fr; }
+      header h1  { font-size: 1.2rem; }
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+      overflow: hidden;
+    }
+
+    .card-header { padding: 18px 22px 13px; border-bottom: 1px solid #e2e8f0; }
+    .card-header.bg-blue  { background: #ebf4ff; }
+    .card-header.bg-green { background: #e6f9f0; }
+    .card-header h2 { font-size: 1.1rem; font-weight: 700; color: #1a3c5e; margin-bottom: 3px; }
+    .card-header.bg-green h2 { color: #1a5e3e; }
+    .card-header p  { font-size: 0.79rem; color: #64748b; }
+
+    .card-body { padding: 20px 22px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    .form-group select {
+      width: 100%;
+      padding: 11px 36px 11px 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1a202c;
+      background: #f8fafc;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .form-group select:focus {
+      outline: none;
+      border-color: #2563a8;
+      box-shadow: 0 0 0 3px rgba(37,99,168,0.12);
+    }
+
+    .result-box {
+      margin-top: 6px;
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .result-box.show { display: block; }
+
+    .result-box .result-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .result-box .class-badge {
+      display: inline-block;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 5px 15px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .result-box .result-detail { font-size: 0.83rem; opacity: 0.85; margin-top: 4px; }
+
+    .class-I   { background:#fff7e6; border:1.5px solid #f59e0b; }
+    .class-I   .class-badge { background:#fef3c7; color:#92400e; }
+    .class-II  { background:#eff6ff; border:1.5px solid #60a5fa; }
+    .class-II  .class-badge { background:#dbeafe; color:#1e40af; }
+    .class-III { background:#f0fdf4; border:1.5px solid #4ade80; }
+    .class-III .class-badge { background:#dcfce7; color:#166534; }
+    .class-IV  { background:#fdf4ff; border:1.5px solid #c084fc; }
+    .class-IV  .class-badge { background:#f3e8ff; color:#6b21a8; }
+    .class-V   { background:#fff1f2; border:1.5px solid #fb7185; }
+    .class-V   .class-badge { background:#ffe4e6; color:#9f1239; }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.81rem;
+      padding: 4px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .score-row:last-of-type { border-bottom: none; }
+    .score-row span:last-child { font-weight: 700; color: #1a3c5e; }
+    .total-score { margin-top: 10px; font-size: 1.05rem; font-weight: 700; color: #1a3c5e; }
+
+    .ref-toggle {
+      margin-top: 18px;
+      font-size: 0.79rem;
+      color: #2563a8;
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .ref-table {
+      display: none;
+      margin-top: 10px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.77rem;
+    }
+    .ref-table th {
+      background: #f1f5f9;
+      padding: 7px 9px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .ref-table td { padding: 6px 9px; border: 1px solid #e2e8f0; color: #374151; }
+    .ref-table tr:nth-child(even) td { background: #f8fafc; }
+
+    .reset-btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      background: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reset-btn:hover { background: #e2e8f0; }
+
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      font-size: 0.76rem;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+    footer strong { color: #64748b; }
+
+    /* Offline indicator */
+    #offline-bar {
+      display: none;
+      background: #92400e;
+      color: white;
+      text-align: center;
+      font-size: 0.8rem;
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="offline-bar">⚡ You're offline — the app still works fully!</div>
+
+<div id="install-banner">
+  <span>📲 Install this app on your phone for offline use</span>
+  <button id="install-btn">Install</button>
+  <button class="dismiss" id="dismiss-btn">Not now</button>
+</div>
+
+<header>
+  <h1>Socioeconomic Status Calculator — India 2026</h1>
+  <p>B. G. Prasad &amp; Modified Kuppuswamy Scales · CPI-IW January 2026 (148.6)</p>
+  <div class="citation">
+    Yadav A, Mondal A, Debnath A. Revamping socioeconomic assessment: 2026 updates to the B. G. Prasad
+    and modified Kuppuswamy scales. <em>Int J Community Med Public Health</em> 2026;13:2050–4.
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- B. G. PRASAD -->
+  <div class="card">
+    <div class="card-header bg-blue">
+      <h2>B. G. Prasad Scale (2026)</h2>
+      <p>Based on per capita monthly income. Suitable for urban &amp; rural settings.</p>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="bgp-income-range">Per capita monthly income (₹)</label>
+        <select id="bgp-income-range" onchange="calcBGP()">
+          <option value="">— Select income range —</option>
+          <option value="1">₹9,769 and above</option>
+          <option value="2">₹4,884 – ₹9,768</option>
+          <option value="3">₹2,930 – ₹4,883</option>
+          <option value="4">₹1,465 – ₹2,929</option>
+          <option value="5">Less than ₹1,464</option>
+        </select>
+      </div>
+
+      <div id="bgp-result" class="result-box"></div>
+
+      <button class="ref-toggle" onclick="toggleRef('bgp-ref-table', this)">▸ Show reference table</button>
+      <table class="ref-table" id="bgp-ref-table">
+        <thead><tr><th>Class</th><th>Original 1961 (₹)</th><th>Updated 2026 (₹)</th></tr></thead>
+        <tbody>
+          <tr><td>I – Upper</td><td>≥100</td><td>≥9,769</td></tr>
+          <tr><td>II – Upper Middle</td><td>50–99</td><td>4,884–9,768</td></tr>
+          <tr><td>III – Middle</td><td>30–49</td><td>2,930–4,883</td></tr>
+          <tr><td>IV – Lower Middle</td><td>15–29</td><td>1,465–2,929</td></tr>
+          <tr><td>V – Lower</td><td>&lt;15</td><td>&lt;1,464</td></tr>
+        </tbody>
+      </table>
+      <button class="reset-btn" onclick="resetBGP()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- KUPPUSWAMY -->
+  <div class="card">
+    <div class="card-header bg-green">
+      <h2>Modified Kuppuswamy Scale (2026)</h2>
+      <p>Based on education, occupation &amp; family income of the household head.</p>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="k-edu">Education of head of family</label>
+        <select id="k-edu" onchange="calcKupp()">
+          <option value="">— Select education —</option>
+          <option value="7">Postgraduate and above</option>
+          <option value="6">Graduate</option>
+          <option value="5">Higher secondary</option>
+          <option value="4">Middle school</option>
+          <option value="3">Primary school</option>
+          <option value="1">Illiterate</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="k-occ">Occupation of head of family</label>
+        <select id="k-occ" onchange="calcKupp()">
+          <option value="">— Select occupation —</option>
+          <option value="10">Legislators, senior officials, managers</option>
+          <option value="9">Professionals</option>
+          <option value="8">Technicians / associate professionals</option>
+          <option value="7">Clerk</option>
+          <option value="6">Skilled worker, shop &amp; market sales workers</option>
+          <option value="5">Skilled agricultural and fishery workers</option>
+          <option value="4">Craft and related trade workers</option>
+          <option value="3">Plant and machine operators and assemblers</option>
+          <option value="2">Elementary occupation</option>
+          <option value="1">Unemployed</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="k-inc">Monthly family income (₹) — Updated 2026</label>
+        <select id="k-inc" onchange="calcKupp()">
+          <option value="">— Select income range —</option>
+          <option value="12">≥ ₹66,007</option>
+          <option value="10">₹33,004 – ₹66,006</option>
+          <option value="6">₹24,753 – ₹33,003</option>
+          <option value="4">₹16,503 – ₹24,752</option>
+          <option value="3">₹9,901 – ₹16,501</option>
+          <option value="2">₹3,301 – ₹9,900</option>
+          <option value="1">≤ ₹3,300</option>
+        </select>
+      </div>
+
+      <div id="kupp-result" class="result-box"></div>
+
+      <button class="ref-toggle" onclick="toggleRef('kupp-ref-table', this)">▸ Show reference table</button>
+      <table class="ref-table" id="kupp-ref-table">
+        <thead><tr><th>Total Score</th><th>Socioeconomic Class</th></tr></thead>
+        <tbody>
+          <tr><td>26–29</td><td>I – Upper class</td></tr>
+          <tr><td>16–25</td><td>II – Upper middle class</td></tr>
+          <tr><td>11–15</td><td>III – Lower middle class</td></tr>
+          <tr><td>5–10</td><td>IV – Upper lower class</td></tr>
+          <tr><td>&lt;5</td><td>V – Lower class</td></tr>
+        </tbody>
+      </table>
+      <button class="reset-btn" onclick="resetKupp()">↺ Reset</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <strong>For educational and research use only.</strong><br>
+  Multiplication factor: CPI-IW Jan 2026 (148.6) ÷ base 2016 (100) = 1.486 · Linking factors: 4.63 × 4.93 × 2.88<br>
+  Source: Yadav A, Mondal A, Debnath A. <em>Int J Community Med Public Health</em> 2026;13:2050–54.
+  DOI: 10.18203/2394-6040.ijcmph20260759
+</footer>
+
+<script>
+  // ── Service Worker registration ──────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+  // ── Offline / online indicator ───────────────────────────────────
+  const offlineBar = document.getElementById('offline-bar');
+  function updateOnlineStatus() {
+    offlineBar.style.display = navigator.onLine ? 'none' : 'block';
+  }
+  window.addEventListener('online',  updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // ── PWA Install prompt ───────────────────────────────────────────
+  let deferredPrompt;
+  const banner     = document.getElementById('install-banner');
+  const installBtn = document.getElementById('install-btn');
+  const dismissBtn = document.getElementById('dismiss-btn');
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    banner.style.display = 'flex';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    banner.style.display = 'none';
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+    }
+  });
+
+  dismissBtn.addEventListener('click', () => {
+    banner.style.display = 'none';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    banner.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  // ── B. G. Prasad ─────────────────────────────────────────────────
+  const bgpData = {
+    "1": { cls:"I",   label:"Upper class",        range:"≥ ₹9,769 per capita/month",      theme:"class-I"   },
+    "2": { cls:"II",  label:"Upper Middle class",  range:"₹4,884 – ₹9,768 per capita/month", theme:"class-II"  },
+    "3": { cls:"III", label:"Middle class",        range:"₹2,930 – ₹4,883 per capita/month", theme:"class-III" },
+    "4": { cls:"IV",  label:"Lower Middle class",  range:"₹1,465 – ₹2,929 per capita/month", theme:"class-IV"  },
+    "5": { cls:"V",   label:"Lower class",         range:"< ₹1,464 per capita/month",      theme:"class-V"   }
+  };
+
+  function calcBGP() {
+    const val = document.getElementById('bgp-income-range').value;
+    const box = document.getElementById('bgp-result');
+    if (!val) { box.className = 'result-box'; return; }
+    const d = bgpData[val];
+    box.className = `result-box show ${d.theme}`;
+    box.innerHTML = `
+      <div class="result-label">B. G. Prasad Classification</div>
+      <div class="class-badge">Class ${d.cls} — ${d.label}</div>
+      <div class="result-detail">Income range: ${d.range}</div>`;
+  }
+
+  function resetBGP() {
+    document.getElementById('bgp-income-range').value = '';
+    document.getElementById('bgp-result').className = 'result-box';
+  }
+
+  // ── Kuppuswamy ───────────────────────────────────────────────────
+  const kuppClasses = [
+    { min:26, max:29, cls:"I",   label:"Upper class",        theme:"class-I"   },
+    { min:16, max:25, cls:"II",  label:"Upper Middle class", theme:"class-II"  },
+    { min:11, max:15, cls:"III", label:"Lower Middle class", theme:"class-III" },
+    { min:5,  max:10, cls:"IV",  label:"Upper Lower class",  theme:"class-IV"  },
+    { min:0,  max:4,  cls:"V",   label:"Lower class",        theme:"class-V"   }
+  ];
+
+  const eduLabels = {
+    "7":"Postgraduate and above","6":"Graduate","5":"Higher secondary",
+    "4":"Middle school","3":"Primary school","1":"Illiterate"
+  };
+  const occLabels = {
+    "10":"Legislators/senior officials","9":"Professionals",
+    "8":"Technicians/assoc. professionals","7":"Clerk",
+    "6":"Skilled worker/sales","5":"Skilled agri./fishery workers",
+    "4":"Craft & trade workers","3":"Machine operators & assemblers",
+    "2":"Elementary occupation","1":"Unemployed"
+  };
+  const incLabels = {
+    "12":"≥ ₹66,007","10":"₹33,004–₹66,006","6":"₹24,753–₹33,003",
+    "4":"₹16,503–₹24,752","3":"₹9,901–₹16,501","2":"₹3,301–₹9,900","1":"≤ ₹3,300"
+  };
+
+  function calcKupp() {
+    const edu = parseInt(document.getElementById('k-edu').value) || 0;
+    const occ = parseInt(document.getElementById('k-occ').value) || 0;
+    const inc = parseInt(document.getElementById('k-inc').value) || 0;
+    const box = document.getElementById('kupp-result');
+    if (!edu || !occ || !inc) { box.className = 'result-box'; return; }
+
+    const total = edu + occ + inc;
+    const found = kuppClasses.find(c => total >= c.min && total <= c.max);
+    if (!found) { box.className = 'result-box'; return; }
+
+    const ev = document.getElementById('k-edu').value;
+    const ov = document.getElementById('k-occ').value;
+    const iv = document.getElementById('k-inc').value;
+
+    box.className = `result-box show ${found.theme}`;
+    box.innerHTML = `
+      <div class="result-label">Kuppuswamy Classification</div>
+      <div class="class-badge">Class ${found.cls} — ${found.label}</div>
+      <div style="margin-top:10px">
+        <div class="score-row"><span>Education (${eduLabels[ev]})</span><span>+${edu}</span></div>
+        <div class="score-row"><span>Occupation (${occLabels[ov]})</span><span>+${occ}</span></div>
+        <div class="score-row"><span>Family Income (${incLabels[iv]})</span><span>+${inc}</span></div>
+      </div>
+      <div class="total-score">Total Score: ${total} / 29</div>`;
+  }
+
+  function resetKupp() {
+    ['k-edu','k-occ','k-inc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('kupp-result').className = 'result-box';
+  }
+
+  function toggleRef(id, btn) {
+    const t = document.getElementById(id);
+    const open = t.style.display === 'table';
+    t.style.display = open ? 'none' : 'table';
+    btn.textContent = (open ? '▸ Show' : '▾ Hide') + ' reference table';
+  }
+</script>
+</body>
+</html>
